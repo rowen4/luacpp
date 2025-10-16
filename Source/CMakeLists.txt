@@ -116,7 +116,11 @@ ExternalProject_Add(googletest
   CMAKE_ARGS        -DCMAKE_INSTALL_PREFIX=${GOOGLETEST_INSTALL} -DINCLUDE_INSTALL_DIR=${GOOGLETEST_INSTALL}
   TEST_COMMAND      ""
 )
-link_directories(${GOOGLETEST_INSTALL}/lib)
+if(CMAKE_SIZEOF_VOID_P GREATER 4)
+    link_directories(${GOOGLETEST_INSTALL}/lib64)
+else()
+    link_directories(${GOOGLETEST_INSTALL}/lib)
+endif()
 include_directories(${GOOGLETEST_INSTALL}/include)
 include(GoogleTest)
 
