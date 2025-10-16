@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.26.5)
 project(LuaCpp)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -116,7 +116,7 @@ ExternalProject_Add(googletest
   CMAKE_ARGS        -DCMAKE_INSTALL_PREFIX=${GOOGLETEST_INSTALL} -DINCLUDE_INSTALL_DIR=${GOOGLETEST_INSTALL}
   TEST_COMMAND      ""
 )
-if(CMAKE_SIZEOF_VOID_P GREATER 4)
+if(EXISTS "${GOOGLETEST_INSTALL}/lib64")    #usage of lib/lib64 is OS dependant
     link_directories(${GOOGLETEST_INSTALL}/lib64)
 else()
     link_directories(${GOOGLETEST_INSTALL}/lib)
@@ -162,15 +162,22 @@ gtest_discover_tests(testLuaLibrary)
 #############
 # Memory Test
 #############
-find_program(valgrind valgrind)
 
-if (valgrind)
-	message(STATUS "Found command 'valgrand' => Use target 'test_memory' to perform memory test")
-	add_custom_target( test_memory
-		COMMAND valgrind -v --run-cxx-freeres=yes --run-libc-freeres=yes make test
-	)
+set(VALGRIND_SUPPORTED_OS "FreeBSD;Linux")
+list(FIND VALGRIND_SUPPORTED_OS "${CMAKE_SYSTEM_NAME}" VALGRIND_OS)
+if(VALGRIND_OS GREATER_EQUAL 0)
+    message("Valgrind is supported on: ${CMAKE_SYSTEM_NAME}")
+    find_program(valgrind valgrind)
+    if (valgrind)
+        message(STATUS "Found command 'valgrand' => Use target 'test_memory' to perform memory test")
+        add_custom_target( test_memory
+            COMMAND valgrind -v --run-cxx-freeres=yes --run-libc-freeres=yes make test
+        )
+    else()
+        message(WARNING "Cannot find command 'valgrind' => Please install package 'valgrind' to run memory tests")
+    endif()
 else()
-	message(WARNING "Cannot find command 'valgrand' => Please install package 'valgrand' to run memory tests")
+    message("Valgrind is not supported on: ${CMAKE_SYSTEM_NAME}")
 endif()
 
 ########
